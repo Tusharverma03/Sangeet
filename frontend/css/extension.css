@@ -1,0 +1,245 @@
+
+/* extension.css */
+.ext-dark-mode {
+    background: #0f1720;
+    color: #dde7f0;
+}
+.extension-controls button {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 6px 8px;
+    border-radius: 6px;
+}
+.ext-modal {
+    position: fixed;
+    inset: 0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: rgba(0,0,0,0.6);
+    z-index: 10000;
+}
+.ext-modal-inner {
+    background: white;
+    color: black;
+    padding: 16px;
+    border-radius: 8px;
+    width: 320px;
+    max-height: 70vh;
+    overflow:auto;
+}
+.ext-modal .ext-entry {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+}
+.ext-modal .ext-entry:hover { background:#f5f5f5; }
+.ext-modal-inner h3 { margin-top:0; }
+.fav-btn { font-size: 16px; background: transparent; }
+
+
+/* Floating control container styles (applies to the element created by extension.js) */
+.extension-controls, .extension-controls * {
+    box-sizing: border-box;
+}
+
+@media (max-width: 720px) {
+    .extension-controls {
+        right: 8px !important;
+        top: 8px !important;
+        padding: 6px !important;
+        gap: 4px !important;
+    }
+}
+
+.extension-controls button {
+    min-width: 48px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    color: inherit;
+    cursor: pointer;
+    padding: 6px 10px;
+    font-size: 13px;
+}
+
+/* ensure modal has high z-index */
+/* FORCE VISIBILITY OF THE FLOATING CONTROL BAR - final polished */
+.extension-controls {
+    position: fixed !important;
+    top: 15px !important;
+    right: 15px !important;
+    z-index: 999999 !important;
+
+    background: rgba(255, 255, 255, 0.12) !important;
+    backdrop-filter: blur(8px) !important;
+
+    padding: 8px 10px !important;
+    border-radius: 12px !important;
+    display: flex !important;
+    gap: 8px !important;
+    align-items: center;
+}
+
+.extension-controls button {
+    color: white !important;
+    font-weight: 600 !important;
+    background: rgba(0, 0, 0, 0.35) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-radius: 8px !important;
+    padding: 6px 10px !important;
+    min-width: 52px;
+}
+
+.extension-controls button:hover {
+    background: rgba(255,255,255,0.28) !important;
+    color: black !important;
+}
+
+.ext-modal { z-index: 200000 !important; }
+
+/* Floating Lyrics Box */
+#lyrics-popup {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+
+    width: 300px;
+    max-height: 50vh; /* allows long lyrics */
+    overflow-y: auto; /* scroll if long */
+    padding: 14px;
+
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    backdrop-filter: blur(10px);
+    border-radius: 14px;
+    z-index: 999999;
+
+    font-family: "Inter", sans-serif;
+    font-size: 14px;
+    white-space: pre-line;
+
+    box-shadow: 0 4px 20px rgba(0,0,0,0.45);
+}
+
+#lyrics-header {
+    font-weight: bold;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+}
+
+#lyrics-close {
+    cursor: pointer;
+    font-size: 18px;
+    padding-left: 8px;
+}
+/* ===========================================
+   SIDEBAR BUTTON: MATCH EXISTING STYLE
+=========================================== */
+#recently-btn {
+    cursor: pointer;
+}
+
+/* Hover matches other buttons */
+#recently-btn:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* ===========================================
+   THE DRAWER PANEL
+=========================================== */
+#recently-drawer {
+    position: fixed;
+    left: -280px;    /* hidden by default */
+    top: 60px;
+
+    width: 250px;
+    max-height: 75vh;
+    overflow-y: auto;
+
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(10px);
+
+    padding: 14px;
+    border-radius: 12px;
+
+    color: white;
+    z-index: 999999;
+
+    transition: left 0.3s ease-in-out;
+}
+
+#recently-drawer.open {
+    left: 210px;   /* sits next to your sidebar */
+}
+
+/* Drawer header */
+#recently-header {
+    display: flex;
+    justify-content: space-between;
+
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 12px;
+}
+
+/* Close button */
+#recently-close {
+    cursor: pointer;
+    font-size: 20px;
+}
+
+/* Recently played items */
+.recent-item {
+    padding: 8px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.recent-item:hover {
+    background: rgba(255,255,255,0.18);
+}
+/* ==========================================================
+   TOAST NOTIFICATIONS
+========================================================== */
+
+#toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    z-index: 99999999;
+}
+
+.toast {
+    background: rgba(0,0,0,0.75);
+    color: white;
+
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.35s ease;
+
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.3);
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}

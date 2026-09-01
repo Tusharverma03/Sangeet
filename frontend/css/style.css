@@ -1,0 +1,472 @@
+h1{
+    color: wheat;
+    letter-spacing: 2px;
+    margin-top: 1px;
+    font-family:cursive;
+    font-size: small;
+    text-align: center;
+}
+img{
+    height: 180px;
+    width: 180px;
+}
+p{
+    margin-top: 1px;
+    color: white;
+    text-align: left;
+    font-family:cursive;
+    letter-spacing: 5px;
+    font-size: small;
+    padding-left: 10px;
+}
+body{
+    user-select: none;
+    background-color: black;
+    margin: 0;
+    overflow: hidden;
+}
+.parent{
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+}
+.header{
+    width: 100%;
+    text-align: center;
+    height: min-content;
+    color: aliceblue;
+    padding: 20px;
+    border-radius: 5px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size:x-large;
+    box-shadow: 5px 5px rgb(14, 13, 13);
+    margin-bottom: 15px;
+    transition-property: transform;
+    transition-duration: 0.3s;
+    letter-spacing: 20px;
+}
+.header:hover{
+    transform: scale(1.1);
+    cursor: pointer;
+}
+.innercontent{
+    display: flex;
+    flex-direction: row;
+    height: 90%;
+}
+.options {
+    display: flex;
+    flex-direction: column;
+    width: 240px; 
+    flex-shrink: 0; 
+    overflow-y: auto; 
+    max-height: 100%; 
+    scrollbar-width: none; 
+}
+.options::-webkit-scrollbar {
+    display: none; 
+}
+.btns {
+    text-align: center;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: large;
+    color: rgb(204, 195, 195);
+    box-shadow: 5px 5px rgb(14, 13, 13);
+    width: 200px;
+    letter-spacing: 2px;
+    transition-property: opacity;
+    transition-duration: 0.3s;
+    padding: 15px; 
+    margin: 12px 20px; 
+    flex-shrink: 0; 
+}
+.btns:hover{
+    cursor: pointer;
+    opacity: 0.5;
+}
+.menu-body{
+    display: flex;
+    border-left: 2px solid rgb(24, 22, 22);
+    border-top: 2px solid rgb(24, 22, 22);   
+    width: 100%;
+    height: 100%;
+    padding-top: 10px;
+}
+.songs-menu{
+    display: flex;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+    gap: 10px;
+    scrollbar-width: none; 
+    overflow-y: scroll;
+    overflow-x: hidden;
+    width: 100%;
+}
+
+/* =======================================================
+   THE PERFECT SONG CARD CSS 
+======================================================= */
+.song {
+    width: 190px;
+    height: min-content; 
+    text-align: center;
+    border-radius: 8px; 
+    padding: 15px; 
+    background-color: #181818; 
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); 
+    transition: all 0.3s ease; 
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    box-sizing: border-box;
+}
+.song:hover {
+    cursor: pointer;
+    transform: scale(1.05) translateY(-4px); 
+    background-color: #282828; 
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
+}
+.song img {
+    width: 100% !important; 
+    height: 170px !important; 
+    aspect-ratio: 1 / 1; 
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+.song h1 {
+    width: 100%;
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    margin: 0 0 4px 0 !important;
+    font-size: 1.1rem;
+}
+.song p {
+    width: 100%;
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+/* =======================================================
+   VINTAGE PREMIUM "NOW PLAYING" PLAYER
+======================================================= */
+.player {
+    background-color: #121212; /* Deep, flat vintage black */
+    border: 1px solid #222; /* Subtle framing */
+    border-radius: 12px;
+    width: 320px;
+    min-width: 320px;
+    height: min-content;
+    padding: 25px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    box-sizing: border-box;
+    margin: 0 20px;
+}
+
+.player-hidden { display: none !important; }
+
+/* 1. Label */
+.now-playing-label {
+    font-family: Verdana, sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    color: #888;
+    margin: 0 0 20px 0;
+    text-align: center;
+}
+
+/* 2. Artwork */
+.player-art {
+    width: 240px !important;
+    height: 240px !important;
+    border-radius: 8px;
+    object-fit: cover;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    margin-bottom: 25px;
+}
+
+/* 3. Info & Heart */
+.player-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+.player-text {
+    text-align: left;
+    max-width: 80%;
+}
+#player-title {
+    font-family: cursive;
+    color: wheat;
+    font-size: 1.3rem;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#player-artist {
+    font-family: Verdana, sans-serif;
+    color: #d8b48b; /* Muted vintage cream */
+    font-size: 0.85rem;
+    margin: 4px 0 0 0;
+}
+.player-heart {
+    color: wheat;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.player-heart:hover { transform: scale(1.1); }
+
+/* 4. Progress Bar */
+.progress-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+.progress-container span {
+    color: #888;
+    font-size: 0.75rem;
+    font-family: Verdana, sans-serif;
+    min-width: 35px;
+    text-align: center;
+}
+.slider {
+    flex: 1;
+    height: 4px;
+    background: #333;
+    appearance: none;
+    -webkit-appearance: none;
+    border-radius: 2px;
+    cursor: pointer;
+    margin: 0;
+}
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    background: wheat;
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+/* 5. Main Controls */
+.main-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 15px;
+}
+.player-icon {
+    color: wheat;
+    font-size: 1.4rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+.player-icon:hover { opacity: 1; }
+.player-icon-main {
+    color: wheat;
+    font-size: 3rem; 
+    cursor: pointer;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    transition: transform 0.2s;
+}
+.player-icon-main:hover { transform: scale(1.05); }
+
+/* 6. Secondary Controls */
+.secondary-controls {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 25px;
+    width: 100%;
+}
+.player-icon-small {
+    color: #555;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.player-icon-small.active { color: wheat; }
+
+/* 7. Tabs */
+.player-tabs {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    border-bottom: 1px solid #222;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+.tab {
+    color: #666;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: Verdana, sans-serif;
+    letter-spacing: 1px;
+    transition: color 0.2s;
+}
+.tab.active {
+    color: wheat;
+    font-weight: bold;
+}
+/* Keeps the container a fixed height so it doesn't stretch the player */
+.tab-content {
+    width: 100%;
+    text-align: center;
+    color: #888;
+    height: 160px; 
+    overflow-y: auto; 
+    scrollbar-width: none; 
+    padding-top: 10px;
+}
+
+/* The new Vintage Typography for the lyrics */
+.lyrics-display {
+    color: wheat; 
+    font-family: cursive; 
+    font-size: 0.95rem;
+    line-height: 2.2; /* Extra breathing room between lines */
+    padding: 0 10px 20px 10px;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8); /* Subtle contrast */
+}
+/* ======================================================= */
+
+.searchBarDiv{
+    width: 93%;
+    height: 30px;
+    padding: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 1px 1px rgb(53, 52, 52);
+}
+.searchBarBorder{
+    width: 80%;
+    padding: 5px;
+    border-radius: 20px;
+    background: linear-gradient(orange, white, green);
+}
+#searchBar{
+    width: 100%;
+    border-radius: 20px;
+    padding: 10px;
+    font-size: x-large;
+    font-family: cursive;
+    color: black;
+}
+.songList {
+    flex: 1;
+    padding: 30px; 
+    height: 100%;
+    width: 100%; 
+    display: flex;
+    justify-content: center;
+    align-content: flex-start;
+    flex-wrap: wrap; 
+    gap: 30px; 
+    overflow-y: auto;
+}
+.borderForNewSong{
+    height: min-content;
+    padding: 2px;
+    border-radius: 5px;
+    background: white;
+    cursor: pointer;
+    transition-property: transform;
+    transition-duration: 0.3s;
+    margin-right: 20px;
+}
+.newSong{
+    background-color: black;
+    height: 309.14px;
+    padding: 5px;
+}
+.essentials{
+    width: 75%;
+    height: 100%;
+    border: 1px solid rgb(53, 52, 52);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 15px;
+}
+.borderForNewSong:hover{
+    transform: scale(1.1);
+}
+.choose-file{
+    background: black;
+    font-size: large;
+    cursor: pointer;
+}
+.choose-file::-webkit-file-upload-button{
+    display: block;
+    letter-spacing: 2px;
+    font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    background: linear-gradient(270deg,rgb(146, 80, 80),  rgb(91, 91, 150), rgb(231, 191, 198));
+    border: 1px solid white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.songNamePad{
+    padding: 5px;
+    font-size: large;
+    font-family: cursive;
+    letter-spacing: 3px;
+    border-radius: 5px;
+}
+.submitDiv{
+    width: 100%;
+    height: 250px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+}
+.submit{
+    font-size: x-large;
+    letter-spacing: 2px;
+    border-radius: 15px;
+    padding: 5px;
+    box-shadow: 2px 2px rgb(58, 58, 58);
+    cursor: pointer;
+}
+.d1{
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+}
+.d2{
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0px;
+    flex-direction: row;   
+    width: 100%;
+}
+.d3{
+    justify-content: center;
+    align-items: center;
+    gap: 0px;
+    flex-wrap: nowrap;   
+}
