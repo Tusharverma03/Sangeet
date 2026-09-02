@@ -1,4 +1,5 @@
 // extension.js - Robust controls: favorites, shuffle, repeat, dark, voice
+// extension.js - Robust controls: favorites, shuffle, repeat, dark, voice
 (function(){
     document.addEventListener('DOMContentLoaded', initExtension);
 
@@ -9,7 +10,7 @@
     let shuffle = JSON.parse(localStorage.getItem('mp_shuffle')) || false;
     let repeatMode = localStorage.getItem('mp_repeat') || 'none'; // 'none' | 'one' | 'all'
     let dark = JSON.parse(localStorage.getItem('mp_dark')) || false;
-    let favorites = JSON.parse(localStorage.getItem('mp_favorites') || "[]");
+    let favorites = JSON.parse(localStorage.getItem('mp_favorites_v4') || "[]");
     let shuffledOrder = [];
     // canonical current index stored by extension (keeps state even if audio nodes change)
     window.__mp_current_index = window.__mp_current_index || -1;
@@ -26,7 +27,7 @@
         attachSongClickHandlers();
         attachEndedHandlers();
         if (shuffle) buildShuffledOrder();
-        console.log('Extension loaded: favorites, shuffle, repeat, dark, voice');
+        console.log('Extension loaded: favorites, shuffle, repeat, dark, voice (Data Model Normalized)');
     }
 
     /* ----------------- Favorites ----------------- */
@@ -54,26 +55,27 @@
         });
     }
 
+    // PHASE 3 NORMALIZATION: Lookup by Canonical ID instead of DOM text
     function getSongId(songDiv){
-        const title = songDiv.querySelector('h1')?.innerText.trim() || '';
-        const artist = songDiv.querySelector('p')?.innerText.trim() || '';
-        return title + ' — ' + artist;
+        return songDiv.getAttribute('data-id') || '';
     }
 
     function toggleFavorite(songDiv, btn){
-    const id = getSongId(songDiv);
-    const idx = favorites.indexOf(id);
-    if (idx === -1){
-        favorites.push(id);
-        btn.innerText = '★';
-        showToast("Added to Favorites", "❤️");
-    } else {
-        favorites.splice(idx,1);
-        btn.innerText = '☆';
-        showToast("Removed from Favorites", "💔");
+        const id = getSongId(songDiv);
+        if (!id) return;
+
+        const idx = favorites.indexOf(id);
+        if (idx === -1){
+            favorites.push(id);
+            btn.innerText = '★';
+            if(typeof showToast !== 'undefined') showToast("Added to Extension Favorites", "❤️");
+        } else {
+            favorites.splice(idx,1);
+            btn.innerText = '☆';
+            if(typeof showToast !== 'undefined') showToast("Removed from Extension Favorites", "💔");
+        }
+        localStorage.setItem('mp_favorites_v4', JSON.stringify(favorites));
     }
-    localStorage.setItem('mp_favorites', JSON.stringify(favorites));
-}
 
     /* ----------------- Control bar UI ----------------- */
     function createControlBar(){
@@ -108,16 +110,16 @@
 
         $id('ext-liked').addEventListener('click', showLikedSongs);
         $id('ext-shuffle').addEventListener('click', () => {
-    shuffle = !shuffle;
-    localStorage.setItem('mp_shuffle', JSON.stringify(shuffle));
-    if (shuffle) {
-        buildShuffledOrder();
-        showToast("Shuffle Enabled", "🔀");
-    } else {
-        showToast("Shuffle Disabled", "❌");
-    }
-    updateShuffleButton();
-});
+            shuffle = !shuffle;
+            localStorage.setItem('mp_shuffle', JSON.stringify(shuffle));
+            if (shuffle) {
+                buildShuffledOrder();
+                if(typeof showToast !== 'undefined') showToast("Shuffle Enabled", "🔀");
+            } else {
+                if(typeof showToast !== 'undefined') showToast("Shuffle Disabled", "❌");
+            }
+            updateShuffleButton();
+        });
 
         $id('ext-repeat').addEventListener('click', () => {
             if (repeatMode === 'none') repeatMode = 'all';
@@ -126,15 +128,19 @@
             localStorage.setItem('mp_repeat', repeatMode);
             updateRepeatButton();
         });
+        
         $id('ext-dark').addEventListener('click', () => {
-    dark = !dark;
-    localStorage.setItem('mp_dark', JSON.stringify(dark));
-    applyDarkMode(dark);
-    updateDarkButton();
+            dark = !dark;
+            localStorage.setItem('mp_dark', JSON.stringify(dark));
+            applyDarkMode(dark);
+            updateDarkButton();
 
-    if (dark) showToast("Dark Mode Enabled", "🌙");
-    else showToast("Light Mode Enabled", "☀️");
-});
+            if (dark) {
+                if(typeof showToast !== 'undefined') showToast("Dark Mode Enabled", "🌙");
+            } else {
+                if(typeof showToast !== 'undefined') showToast("Light Mode Enabled", "☀️");
+            }
+        });
 
         $id('ext-voice').addEventListener('click', toggleVoiceRecognition);
     }
@@ -171,9 +177,15 @@
             list.innerHTML = '<p>No liked songs yet</p>';
         } else {
             favorites.forEach(id => {
+                // PHASE 3 NORMALIZATION: Get clean title from registry if available
+                let displayTitle = id;
+                if (typeof appState !== 'undefined' && appState.songRegistry[id]) {
+                    displayTitle = `${appState.songRegistry[id].title} - ${appState.songRegistry[id].artist}`;
+                }
+
                 const entry = document.createElement('div');
                 entry.className = 'ext-entry';
-                entry.innerText = id;
+                entry.innerText = displayTitle;
                 entry.style.cursor = 'pointer';
                 entry.addEventListener('click', () => {
                     const songDiv = songs.find(s => getSongId(s)===id);
@@ -222,24 +234,16 @@
         }
     }
 
+    // PHASE 3 NORMALIZATION: Pull state directly from centralized appState
     function findCurrentIndex(){
         // Primary: use extension-tracked index
         if (typeof window.__mp_current_index === 'number' && window.__mp_current_index >= 0 && window.__mp_current_index < songs.length){
             return window.__mp_current_index;
         }
-        // Fallback: compare active audio src
-        const audios = Array.from(document.querySelectorAll('audio'));
-        const active = audios.find(a => !a.paused) || audios.find(a => a.currentTime>0);
-        if (!active) return -1;
-        const activeSrc = active.currentSrc || active.src;
-        for (let i=0;i<songs.length;i++){
-            const a = songs[i].querySelector('audio');
-            if (!a) continue;
-            // compare by file name (handles relative/absolute)
-            const srcA = a.src || a.currentSrc || '';
-            if (!srcA) continue;
-            if (activeSrc.endsWith(srcA.split('/').pop()) || srcA.endsWith(activeSrc.split('/').pop()) || srcA === activeSrc){
-                return i;
+        // Secondary: Find active index using the canonical ID
+        if (typeof appState !== 'undefined' && appState.currentSong) {
+            for (let i=0;i<songs.length;i++){
+                if (songs[i].getAttribute('data-id') === appState.currentSong.id) return i;
             }
         }
         return -1;
@@ -404,16 +408,29 @@
                 if (music) music.play();
                 return;
             }
-            // else try "play <song name>"
+            
+            // PHASE 3 NORMALIZATION: Pull text matching data directly from registry, not DOM
             const playMatch = text.match(/play (.+)/);
             if (playMatch){
                 const q = playMatch[1].trim().toLowerCase();
                 let best = -1, bestScore = 0;
-                songs.forEach((s,i)=>{
-                    const title = (s.querySelector('h1')?.innerText||'').toLowerCase();
-                    const artist = (s.querySelector('p')?.innerText||'').toLowerCase();
+                
+                songs.forEach((s, i) => {
+                    const id = s.getAttribute('data-id');
+                    const songData = (typeof appState !== 'undefined' && appState.songRegistry) ? appState.songRegistry[id] : null;
+                    
+                    let title = '', artist = '';
+                    if (songData) {
+                        title = songData.title.toLowerCase();
+                        artist = songData.artist.toLowerCase();
+                    } else {
+                        // Safe fallback if song somehow missed registry
+                        title = (s.querySelector('h1')?.innerText || '').toLowerCase();
+                        artist = (s.querySelector('p')?.innerText || '').toLowerCase();
+                    }
+
                     const score = (title.includes(q)?2:0) + (artist.includes(q)?1:0);
-                    if (score>bestScore){ best = i; bestScore = score; }
+                    if (score > bestScore){ best = i; bestScore = score; }
                 });
                 if (best !== -1) { playIndex(best); return; }
             }
@@ -448,6 +465,3 @@
     }
 
 })();
-
-
-

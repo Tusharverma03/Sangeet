@@ -1,27 +1,20 @@
 /* =========================================================
-   CHAPTER 1: CENTRAL STATE & GLOBAL VARIABLES
+   CHAPTER 1: CENTRAL STATE, REGISTRY & NORMALIZERS
 ========================================================= */
 const appState = {
     currentSong: null,
     isPlaying: false,
-    playback: {
-        currentTime: 0,
-        duration: 0
-    },
-    settings: {
-        shuffle: false,
-        repeat: false,
-        darkMode: true
-    },
+    playback: { currentTime: 0, duration: 0 },
+    settings: { shuffle: false, repeat: false, darkMode: true },
     queue: [],
     library: {
-        favorites: JSON.parse(localStorage.getItem("sangeet_favs_v3")) || [],
-        recentlyPlayed: JSON.parse(localStorage.getItem("sangeet_recent")) || [],
+        favorites: JSON.parse(localStorage.getItem("sangeet_favs_v4")) || [],
+        recentlyPlayed: JSON.parse(localStorage.getItem("sangeet_recent_v4")) || [],
         addedSongs: []
-    }
+    },
+    songRegistry: {} 
 };
 
-// LEGACY ALIASES
 let currentActiveSong = appState.currentSong;      
 let isPlayingAudio = appState.isPlaying;           
 let trash = "0"; 
@@ -32,7 +25,62 @@ const controller = document.querySelector(".slider");
 const songsMenuDiv = document.querySelector('.songs-menu');
 if(controller) controller.value = 0;
 
-// STATE LISTENERS
+// CANONICAL NORMALIZERS
+function registerSong(song) {
+    appState.songRegistry[song.id] = song;
+    return song;
+}
+
+function normalizeLocalSong(raw) {
+    return {
+        id: `local_${raw.name}_${raw.singer}`.replace(/[^a-z0-9]/gi, '_').toLowerCase(),
+        title: raw.name,
+        artist: raw.singer,
+        album: null,
+        artwork: raw.poster,
+        audioUrl: raw.audio,
+        duration: null,
+        source: "local",
+        isPreview: false
+    };
+}
+
+function normalizeITunesSong(apiSong) {
+    return {
+        id: `itunes_${Math.random().toString(36).substr(2, 9)}`,
+        title: apiSong.title,
+        artist: apiSong.artist?.name || 'Unknown Artist',
+        album: apiSong.album?.title || null,
+        artwork: apiSong.album?.cover_medium || 'assets/images/default.png',
+        audioUrl: apiSong.preview,
+        duration: apiSong.duration || null,
+        source: "itunes",
+        isPreview: true
+    };
+}
+
+function normalizeImportedSong(name, artist, posterUrl, audioUrl) {
+    return {
+        id: `imported_${Date.now()}_${name}`.replace(/[^a-z0-9]/gi, '_').toLowerCase(),
+        title: name,
+        artist: artist,
+        album: null,
+        artwork: posterUrl,
+        audioUrl: audioUrl,
+        duration: null,
+        source: "imported",
+        isPreview: false
+    };
+}
+
+// HYDRATE CACHE
+// HYDRATE CACHE & AUTO-MIGRATE V3 TO V4
+appState.library.favorites.forEach(registerSong);
+
+appState.library.recentlyPlayed.forEach(registerSong);
+
+appState.library.addedSongs.forEach(registerSong);
+
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("shuffle-btn")?.addEventListener("click", function() {
         appState.settings.shuffle = this.classList.contains("active");
@@ -40,12 +88,14 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("repeat-btn")?.addEventListener("click", function() {
         appState.settings.repeat = this.classList.contains("active");
     });
+    // Auto-render local database to inject data-ids, overwriting hardcoded HTML
+    addHomePage();
 });
 
 /* =========================================================
    CHAPTER 2: SONG DATABASE
 ========================================================= */
-const songs = [
+const rawLocalSongs = [
     { name: "Lag Ja Gale", singer: "Lata Mangeshkar", poster: "assets/images/lagJaGale.jpg", audio: "assets/audio/lagJaGale.mp3" },
     { name: "Imagine", singer: "John Lennon", poster: "assets/images/imagine.jpg", audio: "assets/audio/imagine.mp3" },
     { name: "Pal Pal Dil Ke Paas", singer: "Kishore Kumar", poster: "assets/images/pal_pal_dil_ke_paas.jpg", audio: "assets/audio/pal_pal_dil_ke_paas.mp3" },
@@ -65,7 +115,7 @@ const songs = [
     { name: "Aaj Phir Jeene Ki Tamanna Hai", singer: "Lata Mangeshkar", poster: "assets/images/aaj_phir_jeene_ki_tamanna_hai.jpg", audio: "assets/audio/aaj_phir_jeene_ki_tamanna_hai.mp3" },
     { name: "Bohemian Rhapsody", singer: "Queen", poster: "assets/images/bohemian_rhapsody.jpg", audio: "assets/audio/bohemian_rhapsody.mp3" },
     { name: "Mera Mann Tera Pyaasa", singer: "Mohammed Rafi", poster: "assets/images/mera_mann_tera_pyaasa.jpg", audio: "assets/audio/mera_mann_tera_pyaasa.mp3" },
-    { name: "Can’t Help Falling in Love", singer: "Elvis Presley", poster: "assets/images/cant_help_falling_in_love.jpg", audio: "assets/audio/cant_help_falling_in_love.mp3" },
+    { name: "Can't Help Falling in Love", singer: "Elvis Presley", poster: "assets/images/cant_help_falling_in_love.jpg", audio: "assets/audio/cant_help_falling_in_love.mp3" },
     { name: "capital", singer: "nanku", poster: "assets/images/capital.jpg", audio: "assets/audio/capital.mp3" },
     { name: "101", singer: "seedhe maut", poster: "assets/images/101.jpg", audio: "assets/audio/101.mp3" },
     { name: "11k", singer: "seedhe maut", poster: "assets/images/11k.jpg", audio: "assets/audio/11k.mp3" },
@@ -73,8 +123,15 @@ const songs = [
     { name: "kamikaze", singer: "nanku", poster: "assets/images/kamikaze.jpg", audio: "assets/audio/kamikaze.mp3" },
     { name: "namastute", singer: "seedhe maut", poster: "assets/images/namastute.jpg", audio: "assets/audio/namastute.mp3" },
     { name: "aajkal", singer: "nanku", poster: "assets/images/aajkal.jpg", audio: "assets/audio/aajkal.mp3" },
-    { name: "nanchaku", singer: "mc stan", poster: "assets/images/nanchaku.jpg", audio: "assets/audio/nanchaku.mp3" }
+    { name: "nanchaku", singer: "mc stan", poster: "assets/images/nanchaku.jpg", audio: "assets/audio/nanchaku.mp3" },
+    { name: "nanchaku", singer: "mc stan", poster: "assets/images/nanchaku.jpg", audio: "assets/audio/nanchaku.mp3" },
+    { name: "Allah duhai hai", singer: "Amit mishra", poster: "assets/images/m.jpeg", audio: "assets/audio/Allah Duhai Hai Race 3 320 Kbps.mp3" },
+    { name: "33 Max Verstappen", singer: "Carte Blanq & Maxx Power", poster: "assets/images/max.jpeg", audio: "assets/audio/Carte Blanq & Maxx Power - 33 Max Verstappen (Official Audio).mp3" },
+    { name: "Kids", singer: "Kyle Dixon & Michael Stein", poster: "assets/images/wp1839578-stranger-things-wallpapers.jpg", audio: "assets/audio/Kyle_Dixon_Michael_Stein_-_Kids_Stranger_Things_OST_(mp3.pm).mp3" },
+    { name: "Ehsaas", singer: "Faheem Abdullah", poster: "assets/images/VG.jpeg", audio: "assets/audio/Ehsaas (Lyric Video) Faheem Abdullah _ Vaibhav Pani _ Hyder Dar(MP3_160K).mp3" }
 ];
+
+const songs = rawLocalSongs.map(s => registerSong(normalizeLocalSong(s)));
 
 /* =========================================================
    CHAPTER 3: CORE AUDIO ENGINE (STATE MIGRATED)
@@ -84,26 +141,23 @@ function PicChanger(event) {
     if (playerElement) playerElement.classList.remove('player-hidden');
 
     let currentTarget = p === 1 ? event : event.currentTarget;
-    let ClickedDiv = currentTarget.querySelector('img');
+    
+    // MODEL LOOKUP: Fetch directly from registry via data-id
+    let songId = currentTarget.getAttribute("data-id");
+    let song = appState.songRegistry[songId];
+    if (!song) return console.error("Song data missing for ID:", songId);
     
     if (appState.isPlaying && music) music.pause();        
-    
     music = currentTarget.querySelector('audio');
-    a = ClickedDiv.src.toString(); 
 
-    appState.currentSong = {
-        id: `${currentTarget.querySelector("h1")?.textContent} — ${currentTarget.querySelector("p")?.textContent}`,
-        title: currentTarget.querySelector("h1")?.textContent || "Unknown Title",
-        artist: currentTarget.querySelector("p")?.textContent || "Unknown Artist",
-        cover: a,
-        audioUrl: music.src
-    };
+    appState.currentSong = song;
     currentActiveSong = appState.currentSong; 
+
     updateHeartUI();
 
-    document.getElementById("player-art").src = appState.currentSong.cover;
-    document.getElementById("player-title").textContent = appState.currentSong.title;
-    document.getElementById("player-artist").textContent = appState.currentSong.artist;
+    document.getElementById("player-art").src = song.artwork;
+    document.getElementById("player-title").textContent = song.title;
+    document.getElementById("player-artist").textContent = song.artist;
 
     const playBtn = document.querySelector("#run");
     if(playBtn) {
@@ -115,10 +169,7 @@ function PicChanger(event) {
     trash = "1"; 
     isPlayingAudio = true; 
 
-   if (songsMenuDiv && songsMenuDiv.innerHTML.includes("Liked Songs")) {
-        showFavorites();
-    }
-
+    if (songsMenuDiv && songsMenuDiv.innerHTML.includes("Liked Songs")) showFavorites();
 
     music.play();
     
@@ -150,6 +201,57 @@ function PicChanger(event) {
     if (lyricsTabElement) switchTab('lyrics', lyricsTabElement);
 }
 
+function changeSong(direction) {
+    const allSongsArray = document.querySelectorAll(".song");
+
+    if (direction === 'next' && appState.queue.length > 0) {
+        let nextSong = appState.queue.shift(); 
+        let ghostDeck = document.getElementById("ghost-deck") || document.createElement("div");
+        ghostDeck.id = "ghost-deck";
+        ghostDeck.style.display = "none";
+        if (!document.getElementById("ghost-deck")) document.body.appendChild(ghostDeck);
+
+        ghostDeck.innerHTML = `
+            <div class="song" id="active-ghost-card" data-id="${nextSong.id}">
+                <img src="${nextSong.artwork}" id="image" alt="cover">
+                <h1>${nextSong.title}</h1>
+                <p>${nextSong.artist}</p>
+                <audio src="${nextSong.audioUrl}" id="song"></audio>
+            </div>
+        `;
+        p = 1; 
+        PicChanger(document.getElementById("active-ghost-card"));
+        
+        const activeTab = document.querySelector('.tab.active');
+        if (activeTab && activeTab.textContent.toLowerCase().includes("queue")) switchTab('queue', activeTab);
+        return; 
+    }
+
+    if (direction === 'next' && appState.settings.shuffle) {
+        let randomIndex = Math.floor(Math.random() * allSongsArray.length);
+        p = 1;
+        PicChanger(allSongsArray[randomIndex]);
+        return; 
+    }
+
+    for (let index = 0; index < allSongsArray.length; index++) {
+        let element = allSongsArray[index];
+        let currentId = element.getAttribute("data-id");
+        
+        if (currentId === appState.currentSong.id) {
+            if (direction === 'next' && index < allSongsArray.length - 1) {
+                p = 1;
+                PicChanger(allSongsArray[index + 1]);
+                break;
+            } else if (direction === 'prev' && index > 0) {
+                p = 1;
+                PicChanger(allSongsArray[index - 1]);
+                break;
+            }
+        }
+    }
+}  
+
 function pause() {
     const playBtn = document.querySelector("#run");
     if (!playBtn) return;
@@ -171,6 +273,7 @@ function pause() {
         trash = "1";
         isPlayingAudio = true;
     }
+
     if (songsMenuDiv && songsMenuDiv.innerHTML.includes("Liked Songs")) {
         showFavorites();
     }
@@ -198,34 +301,6 @@ function manual() {
         }, 500);
     }
 }
-
-function changeSong(direction) {
-    const allSongsArray = document.querySelectorAll(".song");
-
-    if (direction === 'next' && appState.settings.shuffle) {
-        let randomIndex = Math.floor(Math.random() * allSongsArray.length);
-        p = 1;
-        PicChanger(allSongsArray[randomIndex]);
-        return; 
-    }
-
-    for (let index = 0; index < allSongsArray.length; index++) {
-        let element = allSongsArray[index];
-        let x = element.querySelector('img');
-        if (x && a === x.src.toString()) {
-            if (direction === 'next' && index < allSongsArray.length - 1) {
-                p = 1;
-                PicChanger(allSongsArray[index + 1]);
-                break;
-            } else if (direction === 'prev' && index > 0) {
-                p = 1;
-                PicChanger(allSongsArray[index - 1]);
-                break;
-            }
-        }
-    }
-}
-
 /* =========================================================
    CHAPTER 4: UI NAVIGATION & SEARCH
 ========================================================= */
@@ -234,11 +309,11 @@ function addHomePage() {
     let htmlString = `<div class="songs-menu">`;
     songs.forEach(song => {
         htmlString += `
-            <div class="song" onclick="PicChanger(event)">
-                <img src="${song.poster}" id="image" alt="">
-                <h1>${song.name}</h1>
-                <p>${song.singer}</p>
-                <audio src="${song.audio}" id="song"></audio>
+            <div class="song" data-id="${song.id}" onclick="PicChanger(event)" oncontextmenu="addToQueue(event)">
+                <img src="${song.artwork}" id="image" alt="">
+                <h1>${song.title}</h1>
+                <p>${song.artist}</p>
+                <audio src="${song.audioUrl}" id="song"></audio>
             </div>
         `;
     });
@@ -278,23 +353,25 @@ async function searchSong() {
             return;
         }
 
-        data.forEach(song => {
+        data.forEach(apiSong => {
+            const song = registerSong(normalizeITunesSong(apiSong));
             const searchedSongDiv = document.createElement("div");
             searchedSongDiv.className = "song";
+            searchedSongDiv.setAttribute("data-id", song.id);
             searchedSongDiv.innerHTML = `
-                <img src="${song.album?.cover_medium || 'assets/images/default.png'}" id="image" alt="cover">
+                <img src="${song.artwork}" id="image" alt="cover">
                 <h1>${song.title}</h1>
-                <p>${song.artist?.name || 'Unknown Artist'}</p>
-                <audio src="${song.preview}" id="song"></audio>
+                <p>${song.artist}</p>
+                <audio src="${song.audioUrl}" id="song"></audio>
             `;
             
             searchedSongDiv.addEventListener('click', (event) => {
                 PicChanger(event);
-                const artistName = song.artist?.name || 'Unknown Artist';
                 let stats = JSON.parse(localStorage.getItem("sangeet_stats")) || {};
-                stats[artistName] = (stats[artistName] || 0) + 1;
+                stats[song.artist] = (stats[song.artist] || 0) + 1;
                 localStorage.setItem("sangeet_stats", JSON.stringify(stats));
             });
+            searchedSongDiv.addEventListener('contextmenu', (event) => addToQueue(event));
             
             songList.appendChild(searchedSongDiv);
         });
@@ -347,15 +424,14 @@ function save() {
         addedSongName.innerText = songName.value;
         addedArtistName.innerText = artistName.value;
         
-        const newSong = {
-            name: songName.value,
-            singer: artistName.value,
-            poster: newDefault.src,
-            audio: URL.createObjectURL(songAudio.files[0]),
-        };
+        const song = registerSong(normalizeImportedSong(
+            songName.value, 
+            artistName.value, 
+            newDefault.src, 
+            URL.createObjectURL(songAudio.files[0])
+        ));
         
-        // MIGRATION: Push directly to appState
-        appState.library.addedSongs.push(newSong);
+        appState.library.addedSongs.push(song);
         alert("Saved successfully!");
         
         poster.value = "";
@@ -366,22 +442,22 @@ function save() {
         alert("Fulfill all the requirements (including files)!");
     }
 }
-
 function addedSongs() {
     songsMenuDiv.classList.remove("d1", "d2");
     songsMenuDiv.innerHTML = ``;
     
-    // MIGRATION: Read directly from appState
     appState.library.addedSongs.forEach(song => {
         let div = document.createElement("div");
         div.className = "song";
+        div.setAttribute("data-id", song.id);
         div.innerHTML = `
-            <img src="${song.poster}" id="image" alt="">
-            <h1>${song.name}</h1>
-            <p>${song.singer}</p>
-            <audio src="${song.audio}" id="song"></audio>
+            <img src="${song.artwork}" id="image" alt="">
+            <h1>${song.title}</h1>
+            <p>${song.artist}</p>
+            <audio src="${song.audioUrl}" id="song"></audio>
         `;
         div.addEventListener('click', (event) => PicChanger(event));
+        div.addEventListener('contextmenu', (event) => addToQueue(event));
         songsMenuDiv.appendChild(div);
     });
     b = 1;
@@ -474,7 +550,7 @@ function showFavorites() {
                         </div>
                     </div>
                     <div style="flex: 2; display: flex; align-items: center; gap: 15px;">
-                        <img src="${song.cover || 'assets/images/default.png'}" style="width: 45px; height: 45px; border-radius: 6px;" alt="cover">
+                        <img src="${song.artwork || 'assets/images/default.png'}" style="width: 45px; height: 45px; border-radius: 6px;" alt="cover">
                         <div style="display: flex; flex-direction: column;">
                             <span style="color: ${isActive ? '#1ed760' : 'white'}; font-weight: bold;">${song.title}</span>
                             <span>${song.artist}</span>
@@ -490,7 +566,6 @@ function showFavorites() {
     html += `</div></div>`;
     mainContainer.innerHTML = html;
 }
-
 function toggleFavorite() {
     if (!appState.currentSong) return alert("Play a song first!");
     
@@ -505,7 +580,7 @@ function toggleFavorite() {
         });
     }
 
-    localStorage.setItem("sangeet_favs_v3", JSON.stringify(appState.library.favorites));
+    localStorage.setItem("sangeet_favs_v4", JSON.stringify(appState.library.favorites));
     updateHeartUI();
     if (document.querySelector('.songList')?.innerHTML.includes("Liked Songs")) showFavorites();
 }
@@ -521,7 +596,7 @@ function updateHeartUI() {
 
 function removeFavoriteFromList(index) {
     appState.library.favorites.splice(index, 1); 
-    localStorage.setItem("sangeet_favs_v3", JSON.stringify(appState.library.favorites));
+    localStorage.setItem("sangeet_favs_v4", JSON.stringify(appState.library.favorites));
     updateHeartUI();
     showFavorites(); 
 }
@@ -536,8 +611,8 @@ function playFavoriteSong(index) {
     if (!document.getElementById("ghost-deck")) document.body.appendChild(ghostDeck);
 
     ghostDeck.innerHTML = `
-        <div class="song" id="active-ghost-card">
-            <img src="${song.cover}" id="image" alt="cover">
+        <div class="song" id="active-ghost-card" data-id="${song.id}">
+            <img src="${song.artwork}" id="image" alt="cover">
             <h1>${song.title}</h1>
             <p>${song.artist}</p>
             <audio src="${song.audioUrl}" id="song"></audio>
@@ -564,13 +639,14 @@ async function switchTab(tabName, element) {
     const contentArea = document.getElementById("tab-content-area");
 
     if (tabName === 'lyrics') {
-        const title = document.getElementById("player-title").textContent;
-        const artist = document.getElementById("player-artist").textContent;
-
-        if (title === "Song Title" || title === "Unknown Title") {
+        // Read strictly from memory, not DOM text
+        if (!appState.currentSong) {
             contentArea.innerHTML = "<p>Play a song to see lyrics.</p>";
             return;
         }
+
+        const title = appState.currentSong.title;
+        const artist = appState.currentSong.artist;
 
         contentArea.innerHTML = "<p style='font-family: Verdana;'>Fetching lyrics from LRCLIB...</p>";
 
@@ -579,7 +655,6 @@ async function switchTab(tabName, element) {
             const cleanArtist = artist.split(',')[0].split('&')[0].split(/feat\.?/i)[0].split(/ft\.?/i)[0].trim();
 
             const url = `https://lrclib.net/api/search?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}`;
-            
             const response = await fetch(url);
             const data = await response.json();
 
@@ -594,7 +669,6 @@ async function switchTab(tabName, element) {
         }
         
     } else if (tabName === 'queue') {
-        // MIGRATION: Map directly to appState.queue
         if (appState.queue.length === 0) {
             contentArea.innerHTML = "<p style='font-family: Verdana;'>Up next: Autoplay<br>(Queue is empty)</p>";
         } else {
@@ -608,7 +682,7 @@ async function switchTab(tabName, element) {
     } else if (tabName === 'details') {
         contentArea.innerHTML = `<p>High Quality Audio (320kbps)</p>`;
     }
-} // <-- This closing brace was missing
+}
 
 function updateSliderColor() {
     if (music && controller && music.duration) {

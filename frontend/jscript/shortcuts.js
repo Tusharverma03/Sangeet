@@ -27,17 +27,10 @@
 
   // helper: find index of active song by comparing audio elements
   function activeIndex(){
-    const audios = $all('audio');
-    const active = audios.find(a => !a.paused) || audios.find(a => a.currentTime > 0);
-    if (!active) return -1;
+    if (!appState || !appState.currentSong) return -1;
     const songs = $all('.song');
-    for (let i=0;i<songs.length;i++){
-      const a = songs[i].querySelector('audio');
-      if (!a) continue;
-      // compare by file name suffix (robust for relative/absolute)
-      const srcA = (a.src || '').split('/').pop();
-      const srcActive = (active.src || active.currentSrc || '').split('/').pop();
-      if (srcA && srcActive && (srcA === srcActive)) return i;
+    for (let i=0; i<songs.length; i++){
+      if (songs[i].getAttribute('data-id') === appState.currentSong.id) return i;
     }
     return -1;
   }
@@ -106,25 +99,18 @@
 
   function updateMediaMetadata(){
     if (!('mediaSession' in navigator)) return;
-    const idx = activeIndex();
-    const songs = $all('.song');
-    if (idx < 0 || !songs[idx]) {
+    if (!appState || !appState.currentSong) {
       navigator.mediaSession.metadata = null;
       return;
     }
-    const songDiv = songs[idx];
-    const title = songDiv.querySelector('h1')?.innerText || 'Unknown';
-    const artist = songDiv.querySelector('p')?.innerText || '';
-    const imgEl = songDiv.querySelector('img');
-    const artwork = imgEl ? [{ src: imgEl.src, sizes: '300x300', type: 'image/jpeg' }] : [];
 
     try{
       navigator.mediaSession.metadata = new MediaMetadata({
-        title,
-        artist,
-        artwork
+        title: appState.currentSong.title,
+        artist: appState.currentSong.artist,
+        artwork: [{ src: appState.currentSong.artwork, sizes: '300x300', type: 'image/jpeg' }]
       });
     }catch(e){ /* some browsers may throw */ }
-  }
+  } 
 
 })();
