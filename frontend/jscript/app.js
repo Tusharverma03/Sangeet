@@ -134,172 +134,185 @@ const rawLocalSongs = [
 const songs = rawLocalSongs.map(s => registerSong(normalizeLocalSong(s)));
 
 /* =========================================================
-   CHAPTER 3: CORE AUDIO ENGINE (STATE MIGRATED)
+   CHAPTER 3: THE LOGICAL AUDIO PLAYER ENGINE
 ========================================================= */
-function PicChanger(event) {
+const Player = {
+    audio: new Audio(), // The single source of truth for media
+    
+    init() {
+        // Append to DOM so shortcuts.js and extension.js can still find it globally
+        this.audio.id = "main-audio-player";
+        document.body.appendChild(this.audio);
+
+        // Native Event Listeners replacing the old setInterval hack
+        this.audio.addEventListener('timeupdate', () => updateProgressUI());
+        this.audio.addEventListener('loadedmetadata', () => {
+            if (controller) controller.max = this.audio.duration;
+            document.getElementById("total-time").innerText = formatTime(this.audio.duration);
+        });
+        this.audio.addEventListener('ended', () => this.handleEnded());
+    },
+
+    loadSong(song) {
+        appState.currentSong = song;
+        currentActiveSong = song; // Legacy sync for extension
+        this.audio.src = song.audioUrl;
+        this.audio.load();
+        updatePlayerUI(); 
+    },
+
+    play() {
+        appState.isPlaying = true;
+        isPlayingAudio = true; 
+        this.audio.play();
+        updatePlayPauseButton();
+        if (songsMenuDiv && songsMenuDiv.innerHTML.includes("Liked Songs")) showFavorites();
+    },
+
+    pause() {
+        appState.isPlaying = false;
+        isPlayingAudio = false; 
+        this.audio.pause();
+        updatePlayPauseButton();
+        if (songsMenuDiv && songsMenuDiv.innerHTML.includes("Liked Songs")) showFavorites();
+    },
+
+    togglePlay() {
+        if (appState.isPlaying) this.pause();
+        else this.play();
+    },
+
+    seek(time) {
+        this.audio.currentTime = time;
+        updateProgressUI();
+    },
+
+    getCurrentTime() {
+        return this.audio.currentTime || 0;
+    },
+
+    getDuration() {
+        return this.audio.duration || 0;
+    },
+
+    handleEnded() {
+        if (appState.settings.repeat) {
+            this.seek(0);
+            this.play();
+        } else {
+            this.next();
+        }
+    },
+
+    next() {
+        // 1. Drain Queue first
+        if (appState.queue.length > 0) {
+            let nextSong = appState.queue.shift();
+            this.loadSong(nextSong);
+            this.play();
+            const activeTab = document.querySelector('.tab.active');
+            if (activeTab && activeTab.textContent.toLowerCase().includes("queue")) switchTab('queue', activeTab);
+            return;
+        }
+
+        // 2. Fetch active DOM list to maintain chronological flow
+        const allDomSongs = Array.from(document.querySelectorAll(".song[data-id]"));
+        if (allDomSongs.length === 0) return;
+
+        // 3. Shuffle override
+        if (appState.settings.shuffle) {
+            let randomIndex = Math.floor(Math.random() * allDomSongs.length);
+            let songId = allDomSongs[randomIndex].getAttribute("data-id");
+            this.loadSong(appState.songRegistry[songId]);
+            this.play();
+            return;
+        }
+
+        // 4. Standard sequential progression
+        let currentIndex = allDomSongs.findIndex(el => el.getAttribute("data-id") === appState.currentSong.id);
+        if (currentIndex !== -1 && currentIndex < allDomSongs.length - 1) {
+            let songId = allDomSongs[currentIndex + 1].getAttribute("data-id");
+            this.loadSong(appState.songRegistry[songId]);
+            this.play();
+        }
+    },
+
+    previous() {
+        const allDomSongs = Array.from(document.querySelectorAll(".song[data-id]"));
+        if (allDomSongs.length === 0) return;
+
+        let currentIndex = allDomSongs.findIndex(el => el.getAttribute("data-id") === appState.currentSong.id);
+        if (currentIndex > 0) {
+            let songId = allDomSongs[currentIndex - 1].getAttribute("data-id");
+            this.loadSong(appState.songRegistry[songId]);
+            this.play();
+        }
+    }
+};
+
+// Initialize the single audio engine
+Player.init();
+
+/* --- UI DELEGATES (These bridge the Player to the DOM) --- */
+
+function updatePlayerUI() {
     const playerElement = document.querySelector('.player');
     if (playerElement) playerElement.classList.remove('player-hidden');
 
-    let currentTarget = p === 1 ? event : event.currentTarget;
-    
-    // MODEL LOOKUP: Fetch directly from registry via data-id
-    let songId = currentTarget.getAttribute("data-id");
-    let song = appState.songRegistry[songId];
-    if (!song) return console.error("Song data missing for ID:", songId);
-    
-    if (appState.isPlaying && music) music.pause();        
-    music = currentTarget.querySelector('audio');
-
-    appState.currentSong = song;
-    currentActiveSong = appState.currentSong; 
+    document.getElementById("player-art").src = appState.currentSong.artwork;
+    document.getElementById("player-title").textContent = appState.currentSong.title;
+    document.getElementById("player-artist").textContent = appState.currentSong.artist;
 
     updateHeartUI();
-
-    document.getElementById("player-art").src = song.artwork;
-    document.getElementById("player-title").textContent = song.title;
-    document.getElementById("player-artist").textContent = song.artist;
-
-    const playBtn = document.querySelector("#run");
-    if(playBtn) {
-        playBtn.classList.remove("fa-play", "fa-circle-play");
-        playBtn.classList.add("fa-circle-pause");
-    }
-    
-    appState.isPlaying = true;
-    trash = "1"; 
-    isPlayingAudio = true; 
-
-    if (songsMenuDiv && songsMenuDiv.innerHTML.includes("Liked Songs")) showFavorites();
-
-    music.play();
-    
-    clearInterval(storeSetInterval);
-    setTimeout(() => { 
-        if(controller) controller.max = music.duration; 
-        document.getElementById("total-time").innerText = formatTime(music.duration);
-    }, 150); 
-    
-    storeSetInterval = setInterval(() => {
-        if(controller) {
-            controller.value = music.currentTime;
-            updateSliderColor(); 
-        }
-        document.getElementById("current-time").innerText = formatTime(music.currentTime);
-        
-        if (controller && controller.value >= (music.duration - 1)) {
-            if (appState.settings.repeat) {
-                music.currentTime = 0;
-                music.play();
-            } else {
-                changeSong('next');
-            }
-        }
-    }, 500);
-
-    p = 0; 
     const lyricsTabElement = document.querySelector('.tab'); 
     if (lyricsTabElement) switchTab('lyrics', lyricsTabElement);
 }
 
-function changeSong(direction) {
-    const allSongsArray = document.querySelectorAll(".song");
-
-    if (direction === 'next' && appState.queue.length > 0) {
-        let nextSong = appState.queue.shift(); 
-        let ghostDeck = document.getElementById("ghost-deck") || document.createElement("div");
-        ghostDeck.id = "ghost-deck";
-        ghostDeck.style.display = "none";
-        if (!document.getElementById("ghost-deck")) document.body.appendChild(ghostDeck);
-
-        ghostDeck.innerHTML = `
-            <div class="song" id="active-ghost-card" data-id="${nextSong.id}">
-                <img src="${nextSong.artwork}" id="image" alt="cover">
-                <h1>${nextSong.title}</h1>
-                <p>${nextSong.artist}</p>
-                <audio src="${nextSong.audioUrl}" id="song"></audio>
-            </div>
-        `;
-        p = 1; 
-        PicChanger(document.getElementById("active-ghost-card"));
-        
-        const activeTab = document.querySelector('.tab.active');
-        if (activeTab && activeTab.textContent.toLowerCase().includes("queue")) switchTab('queue', activeTab);
-        return; 
-    }
-
-    if (direction === 'next' && appState.settings.shuffle) {
-        let randomIndex = Math.floor(Math.random() * allSongsArray.length);
-        p = 1;
-        PicChanger(allSongsArray[randomIndex]);
-        return; 
-    }
-
-    for (let index = 0; index < allSongsArray.length; index++) {
-        let element = allSongsArray[index];
-        let currentId = element.getAttribute("data-id");
-        
-        if (currentId === appState.currentSong.id) {
-            if (direction === 'next' && index < allSongsArray.length - 1) {
-                p = 1;
-                PicChanger(allSongsArray[index + 1]);
-                break;
-            } else if (direction === 'prev' && index > 0) {
-                p = 1;
-                PicChanger(allSongsArray[index - 1]);
-                break;
-            }
-        }
-    }
-}  
-
-function pause() {
+function updatePlayPauseButton() {
     const playBtn = document.querySelector("#run");
-    if (!playBtn) return;
-
-    if (appState.isPlaying) {
-        playBtn.classList.remove("fa-circle-pause");
-        playBtn.classList.add("fa-circle-play");
-        if(music) music.pause();
-        
-        appState.isPlaying = false;
-        trash = "0";
-        isPlayingAudio = false;
-    } else {
-        playBtn.classList.remove("fa-circle-play");
-        playBtn.classList.add("fa-circle-pause");
-        if(music) music.play();
-        
-        appState.isPlaying = true;
-        trash = "1";
-        isPlayingAudio = true;
-    }
-
-    if (songsMenuDiv && songsMenuDiv.innerHTML.includes("Liked Songs")) {
-        showFavorites();
+    if(playBtn) {
+        if (appState.isPlaying) {
+            playBtn.classList.remove("fa-play", "fa-circle-play");
+            playBtn.classList.add("fa-circle-pause");
+        } else {
+            playBtn.classList.remove("fa-circle-pause");
+            playBtn.classList.add("fa-circle-play");
+        }
     }
 }
 
-function manual() {
-    clearInterval(storeSetInterval);
-    if(music && controller) {
-        music.currentTime = controller.value;
+function updateProgressUI() {
+    if(controller) {
+        controller.value = Player.getCurrentTime();
         updateSliderColor(); 
-        
-        storeSetInterval = setInterval(() => {
-            controller.value = music.currentTime;
-            updateSliderColor();
-            document.getElementById("current-time").innerText = formatTime(music.currentTime);
-            
-            if (music.currentTime >= (music.duration - 1)) {
-                if (appState.settings.repeat) {
-                    music.currentTime = 0;
-                    music.play();
-                } else {
-                    changeSong('next');
-                }
-            }
-        }, 500);
     }
+    document.getElementById("current-time").innerText = formatTime(Player.getCurrentTime());
+}
+
+/* --- REPLACED DOM EVENT HANDLERS --- */
+
+function PicChanger(event) {
+    let currentTarget = event.currentTarget;
+    let songId = currentTarget.getAttribute("data-id");
+    let song = appState.songRegistry[songId];
+    
+    if (!song) return console.error("Song data missing for ID:", songId);
+    
+    Player.loadSong(song);
+    Player.play();
+}
+
+function pause() {
+    Player.togglePlay();
+}
+
+function manual() {
+    if(controller) Player.seek(parseFloat(controller.value));
+}
+
+function changeSong(direction) {
+    if (direction === 'next') Player.next();
+    if (direction === 'prev') Player.previous();
 }
 /* =========================================================
    CHAPTER 4: UI NAVIGATION & SEARCH
@@ -605,21 +618,8 @@ function playFavoriteSong(index) {
     let song = appState.library.favorites[index];
     if (!song || !song.audioUrl) return alert("Audio file missing!");
     
-    let ghostDeck = document.getElementById("ghost-deck") || document.createElement("div");
-    ghostDeck.id = "ghost-deck";
-    ghostDeck.style.display = "none";
-    if (!document.getElementById("ghost-deck")) document.body.appendChild(ghostDeck);
-
-    ghostDeck.innerHTML = `
-        <div class="song" id="active-ghost-card" data-id="${song.id}">
-            <img src="${song.artwork}" id="image" alt="cover">
-            <h1>${song.title}</h1>
-            <p>${song.artist}</p>
-            <audio src="${song.audioUrl}" id="song"></audio>
-        </div>
-    `;
-    p = 1; 
-    PicChanger(document.getElementById("active-ghost-card")); 
+    Player.loadSong(song);
+    Player.play();
 }
 
 /* =========================================================
@@ -685,8 +685,8 @@ async function switchTab(tabName, element) {
 }
 
 function updateSliderColor() {
-    if (music && controller && music.duration) {
-        const percentage = (music.currentTime / music.duration) * 100;
+    if (controller && Player.getDuration() > 0) {
+        const percentage = (Player.getCurrentTime() / Player.getDuration()) * 100;
         controller.style.background = `linear-gradient(to right, wheat ${percentage}%, #333 ${percentage}%)`;
     }
 }
