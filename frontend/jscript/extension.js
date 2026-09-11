@@ -39,23 +39,37 @@
         });
     }
 
-    function toggleExtFavorite(songDiv, btn){
-        const id = songDiv.getAttribute('data-id');
-        if (!id) return;
-
-        const idx = favorites.indexOf(id);
-        if (idx === -1){
-            favorites.push(id);
-            btn.innerText = '★';
-            if(typeof showToast !== 'undefined') showToast("Added to Extension Favorites", "❤️");
-        } else {
-            favorites.splice(idx,1);
-            btn.innerText = '☆';
-            if(typeof showToast !== 'undefined') showToast("Removed from Extension Favorites", "💔");
-        }
-        localStorage.setItem('mp_favorites_v4', JSON.stringify(favorites));
+    /* Replace the Favorites logic inside extension.js */
+    function addFavoriteButtons(){
+        $all('.song').forEach((songDiv) => {
+            if (songDiv.querySelector('.fav-btn')) return;
+            const songId = songDiv.getAttribute('data-id');
+            const btn = document.createElement('button');
+            btn.className = 'fav-btn';
+            btn.title = 'Like / Favorite';
+            
+            // Check central state on render
+            let isFav = typeof appState !== 'undefined' && appState.library.favorites.some(f => f.id === songId);
+            btn.innerText = isFav ? '★' : '☆';
+            
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (typeof toggleFavorite !== 'undefined') toggleFavorite(songId); // Route to Central API
+            });
+            
+            btn.style.position = 'absolute';
+            btn.style.right = '8px';
+            btn.style.top = '8px';
+            btn.style.padding = '4px 6px';
+            btn.style.border = 'none';
+            btn.style.borderRadius = '6px';
+            btn.style.cursor = 'pointer';
+            songDiv.style.position = songDiv.style.position || 'relative';
+            songDiv.appendChild(btn);
+        });
     }
 
+    // You can completely DELETE the old toggleExtFavorite() function.
     /* ----------------- Control bar UI ----------------- */
     function createControlBar(){
         const controlsContainer = document.createElement('div');
