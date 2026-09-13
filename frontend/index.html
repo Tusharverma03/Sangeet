@@ -26,9 +26,12 @@
                 <div class="btns" id="newlyAddedSongs" onclick="addedSongs()">
                     <i class="fa-solid fa-music" style="color: #ffffff;"></i> Added Songs
                 </div>
+                <div class="btns" id="Library" onclick="showLibrary()">
+                    <i class="fa-solid fa-book-open" style="color: #ffffff;"></i>Library
+                </div>
 
                 <div class="btns" id="Add-songs" onclick="addSongs()">
-                    <i class="fa-solid fa-plus" style="color: #ffffff;"></i> Add Songs 
+                    <i class="fa-solid fa-plus" style="color: #ffffff;"></i>Add Songs
                 </div>
                 <div class="btns" id="Favorites-btn" onclick="showFavorites()">
                     <i class="fa-solid fa-heart" style="color: #ffffff;"></i> Favorites
@@ -41,214 +44,9 @@
                 </div>
             </div>
              <div class="menu-body">
-                            <div class="songs-menu">
-                                    <!-- 1 -->
-                                    <div class="song" onclick="PicChanger(event)">
-                                        <img src="assets/images/lagJaGale.jpg" id="image" alt="">
-                                        <h1>Lag Ja Gale</h1>
-                                        <p>Lata Mangeshkar</p>
-                                        <audio src="assets/audio/lagJaGale.mp3" id="song"></audio>
-                                    </div>
-
-                                    <!-- 2 -->
-                                    <div class="song" onclick="PicChanger(event)">
-                                        <img src="assets/images/imagine.jpg" id="image" alt="">
-                                        <h1>Imagine</h1>
-                                        <p>John Lennon</p>
-                                        <audio src="assets/audio/imagine.mp3" id="song"></audio>
-                                    </div>
-
-                                    <!-- 3 -->
-                                    <div class="song" onclick="PicChanger(event)">
-                                        <img src="assets/images/pal_pal_dil_ke_paas.jpg" id="image" alt="">
-                                        <h1>Pal Pal Dil Ke Paas</h1>
-                                        <p>Kishore Kumar</p>
-                                        <audio src="assets/audio/pal_pal_dil_ke_paas.mp3" id="song"></audio>
-                                    </div>
-
-                                    <!-- 4 -->
-                                    <div class="song" onclick="PicChanger(event)">
-                                        <img src="assets/images/stand_by_me.jpg" id="image" alt="">
-                                        <h1>Stand by Me</h1>
-                                        <p>Ben E. King</p>
-                                        <audio src="assets/audio/stand_by_me.mp3" id="song"></audio>
-                                    </div>
-
-                                    <!-- 5 -->
-                                    <div class="song" onclick="PicChanger(event)">
-                                        <img src="assets/images/kabhi_kabhie_mere_dil_mein.jpg" id="image" alt="">
-                                        <h1>Kabhi Kabhie Mere Dil Mein</h1>
-                                        <p>Mukesh</p>
-                                        <audio src="assets/audio/kabhi_kabhie_mere_dil_mein.mp3" id="song"></audio>
-                                    </div>
-                                    <!--Hi how are u-->
-                                    
-                                    <div class="song" onclick="PicChanger(event)">
-                                        <img src="assets/images/hotel_california.jpg" id="image" alt="">
-                                        <h1>Hotel California</h1>
-                                        <p>The Eagles</p>
-                                        <audio src="assets/audio/hotel_california.mp3" id="song"></audio>
-                                    </div>
-
-                                    <!-- 7 -->
-                                    <div class="song" onclick="PicChanger(event)">
-                                        <img src="assets/images/chura_liya_hai_tumne.jpg" id="image" alt="">
-                                        <h1>Chura Liya Hai Tumne</h1>
-                                        <p>Asha Bhosle</p>
-                                        <audio src="assets/audio/chura_liya_hai_tumne.mp3" id="song"></audio>
-                                    </div>
-
-                                    <!-- 8 -->
-                                    <div class="song" onclick="PicChanger(event)">
-                                        <img src="assets/images/let_it_be.jpg" id="image" alt="">
-                                        <h1>Let It Be</h1>
-                                        <p>The Beatles</p>
-                                        <audio src="assets/audio/let_it_be.mp3" id="song"></audio>
-                                    </div>
-
-                                    <!-- 9 -->
-                                    <div class="song" onclick="PicChanger(event)">
-                                        <img src="assets/images/yeh_sham_mastani.jpg" id="image" alt="">
-                                        <h1>Yeh Shaam Mastani</h1>
-                                        <p>Kishore Kumar</p>
-                                        <audio src="assets/audio/yeh_sham_mastani.mp3" id="song"></audio>
-                                    </div>
-
-                                    <!-- 10 -->
-                                    <div class="song" onclick="PicChanger(event)">
-                                        <img src="assets/images/suspicious_minds.jpg" id="image" alt="">
-                                        <h1>Suspicious Minds</h1>
-                                        <p>Elvis Presley</p>
-                                        <audio src="assets/audio/suspicious_minds.mp3" id="song"></audio>
-                                    </div>
-
-                                    <!-- 11 -->
-                                    <div class="song" onclick="PicChanger(event)">
-                                        <img src="assets/images/tere_bina_zindagi_se.jpg" id="image" alt="">
-                                        <h1>Tere Bina Zindagi Se</h1>
-                                        <p>Lata Mangeshkar</p>
-                                        <audio src="assets/audio/tere_bina_zindagi_se.mp3" id="song"></audio>
-                                    </div>
-
-                                    <!-- 12 -->
-                                    <div class="song" onclick="PicChanger(event)">
-                                        <img src="assets/images/careless_whisper.jpg" id="image" alt="">
-                                        <h1>Careless Whisper</h1>
-                                        <p>George Michael</p>
-                                        <audio src="assets/audio/careless_whisper.mp3" id="song"></audio>
-                                    </div>
-
-                                    <!-- 13 -->
-                                    <div class="song" onclick="PicChanger(event)">
-                                        <img src="assets/images/roop_tera_mastana.jpg" id="image" alt="">
-                                        <h1>Roop Tera Mastana</h1>
-                                        <p>Kishore Kumar</p>
-                                        <audio src="assets/audio/roop_tera_mastana.mp3" id="song"></audio>
-                                    </div>
-
-                                    <!-- 14 -->
-                                    <div class="song" onclick="PicChanger(event)">
-                                        <img src="assets/images/my_way.jpg" id="image" alt="">
-                                        <h1>My Way</h1>
-                                        <p>Frank Sinatra</p>
-                                        <audio src="assets/audio/my_way.mp3" id="song"></audio>
-                                    </div>
-
-                                    <!-- 15 -->
-                                    <div class="song" onclick="PicChanger(event)">
-                                        <img src="assets/images/ek_pyar_ka_nagma_hai.jpg" id="image" alt="">
-                                        <h1>Ek Pyar Ka Nagma Hai</h1>
-                                        <p>Lata Mangeshkar</p>
-                                        <audio src="assets/audio/ek_pyar_ka_nagma_hai.mp3" id="song"></audio>
-                                    </div>
-
-                                    <!-- 16 -->
-                                    <div class="song" onclick="PicChanger(event)">
-                                        <img src="assets/images/summer_of_69.jpg" id="image" alt="">
-                                        <h1>Summer of '69</h1>
-                                        <p>Bryan Adams</p>
-                                        <audio src="assets/audio/summer_of_69.mp3" id="song"></audio>
-                                    </div>
-
-                                <div class="song" onclick="PicChanger(event)">
-
-                                    <img src="assets/images/capital.jpg" id="image" alt="" srcset="">
-                                    <h1>Capital</h1>
-                                    <p>Nanku</p>
-                                    <audio src="assets/audio/capital.mp3" id="song"></audio>
-                                </div>
-                                <div class="song" onclick="PicChanger(event)">
-                                    <img src="assets/images/101.jpg" id="image"  alt="" srcset="">
-                                    <h1>101</h1>
-                                    <p>Seedhe Maut</p>
-                                    <audio src="assets/audio/101.mp3" id="song"></audio>
-                                </div>
-
-                                <div class="song" onclick="PicChanger(event)">
-                                    <img src="assets/images/11k.jpg" id="image"  alt="" srcset="">
-                                    <h1>11k</h1>
-                                    <p>Seedhe Maut</p>
-                                    <audio src="assets/audio/11k.mp3" id="song"></audio>
-                                </div>
-                                <div class="song" onclick="PicChanger(event)">
-                                    <img src="assets/images/heeriye.jpg" id="image"  alt="" srcset="">
-                                    <h1>Heeriye</h1>
-                                    <p>Nanku</p>
-                                    <audio src="assets/audio/heeriye.mp3" id="song"></audio>
-                                </div>
-                                <div class="song" onclick="PicChanger(event)">
-                                    <img src="assets/images/kamikaze.jpg" id="image"  alt="" srcset="">
-                                    <h1>Kamikaze</h1>
-                                    <p>Nanku</p>
-                                    <audio src="assets/audio/kamikaze.mp3" id="song"></audio>
-                                </div>
-                                <div class="song" onclick="PicChanger(event)">
-                                    <img src="assets/images/namastute.jpg" id="image"  alt="" srcset="">
-                                    <h1>Namastute</h1>
-                                    <p>Seedhe Maut</p>
-                                    <audio src="assets/audio/namastute.mp3" id="song"></audio>
-                                </div>
-                                <div class="song" onclick="PicChanger(event)">
-                                    <img src="assets/images/aajkal.jpg" id="image"  alt="" srcset="">
-                                    <h1>Aajkal</h1>
-                                    <p>Nanku</p>
-                                    <audio src="assets/audio/aajkal.mp3" id="song"></audio>
-                                </div>
-                                <div class="song" onclick="PicChanger(event)">
-                                    <img src="assets/images/nanchaku.jpg" id="image"  alt="" srcset="">
-                                    <h1>Nanchaku</h1>
-                                    <p>Mc Stan</p>
-                                    <audio src="assets/audio/nanchaku.mp3" id="song"></audio>
-                                </div>
-                                <div class="song" onclick="PicChanger(event)">
-                                    <img src="assets/images/m.jpeg" id="image"  alt="" srcset="">
-                                    <h1>Allah duhai hai</h1>
-                                    <p>Amit mishra</p>
-                                    <audio src="assets/audio/Allah Duhai Hai Race 3 320 Kbps.mp3" id="song"></audio>
-                                </div>
-                                <div class="song" onclick="PicChanger(event)">
-                                    <img src="assets/images/max.jpeg" id="image"  alt="" srcset="">
-                                    <h1>33 Max Verstappen</h1>
-                                    <p>Carte Blanq & Maxx Power</p>
-                                    <audio src="assets/audio/Carte Blanq & Maxx Power - 33 Max Verstappen (Official Audio).mp3" id="song"></audio>
-                                </div>
-                                <div class="song" onclick="PicChanger(event)">
-                                    <img src="assets/images/wp1839578-stranger-things-wallpapers.jpg" id="image"  alt="" srcset="">
-                                    <h1>Kids</h1>
-                                    <p>Kyle Dixon & Michael Stein</p>
-                                    <audio src="assets/audio/Kyle_Dixon_Michael_Stein_-_Kids_Stranger_Things_OST_(mp3.pm).mp3" id="song"></audio>
-                                </div>
-                                <div class="song" onclick="PicChanger(event)">
-                                    <img src="assets/images/VG.jpeg" id="image"  alt="" srcset="">
-                                    <h1>Ehsaas</h1>
-                                    <p>Faheem Abdullah</p>
-                                    <audio src="assets/audio/Ehsaas (Lyric Video) Faheem Abdullah _ Vaibhav Pani _ Hyder Dar(MP3_160K).mp3" id="song"></audio>
-                                </div>
-                                
-                             </div>
-                        
-                        
-                            <div class="player player-hidden">
+                <div class="songs-menu"></div>
+                            
+                 <div class="player player-hidden">
     <!-- 1. Label -->
     <p class="now-playing-label">NOW PLAYING</p>
     
@@ -273,9 +71,9 @@
 
     <!-- 5. Main Controls -->
     <div class="main-controls">
-        <i class="fa-solid fa-backward-step player-icon" onclick="changeSong('prev')"></i>
-        <i class="fa-solid fa-circle-play player-icon-main" id="run" onclick="pause()"></i>
-        <i class="fa-solid fa-forward-step player-icon" onclick="changeSong('next')"></i>
+        <i class="fa-solid fa-backward-step player-icon" onclick="Player.previous()"></i>
+        <i class="fa-solid fa-circle-play player-icon-main" id="run" onclick="Player.togglePlay()"></i>
+        <i class="fa-solid fa-forward-step player-icon" onclick="Player.next()"></i>
     </div>
 
     <!-- 6. Secondary Controls -->
@@ -302,6 +100,8 @@
 <script src="jscript/app.js"></script>
 <script src="jscript/shortcuts.js"></script>
 <script src="jscript/toast.js"></script>
+
+<script src="jscript/recently.js"></script>
 
 </body>
 </html>
