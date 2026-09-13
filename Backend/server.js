@@ -86,6 +86,89 @@ app.get('/api/lyrics', async (req, res) => {
     }
 });
 
+// PHASE 7A: Cached Home Catalog
+// PHASE 7B: Deep Categories & Diversity Rules
+let homeCache = { data: null, timestamp: 0 };
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+
+app.get('/api/home', async (req, res) => {
+    const now = Date.now();
+    if (homeCache.data && (now - homeCache.timestamp < CACHE_DURATION)) {
+        console.log("--- Fetching Discover Catalog (CACHE HIT) ---");
+        return res.json({ success: true, categories: homeCache.data });
+    }
+
+    console.log("--- Fetching Discover Catalog (API MISS) ---");
+    try {
+       const categoryDefs = [
+            { id: 'bollywood', title: 'Bollywood & Hindi', term: 'bollywood' }, // Removed "hits" to reduce compilation albums
+            { id: '90s', title: '90s & Throwback', term: '1990s' }, // "1990s" surfaces more original albums than "90s hits"
+            { id: 'pop', title: 'Pop Hits', term: 'pop music' },
+            { id: 'international', title: 'International Classics', term: 'international classics' },
+            { id: 'hollywood', title: 'Hollywood / Soundtracks', term: 'movie soundtrack' },
+            { id: 'indian-contemporary', title: 'Indian Contemporary', term: 'indian pop' }
+        ];
+
+        let finalCategories = [];
+
+        for (let cat of categoryDefs) {
+            const url = `https://itunes.apple.com/search?term=${encodeURIComponent(cat.term)}&entity=song&limit=50`;
+            const response = await axios.get(url, { timeout: 6000 });
+            
+            if (response.data && response.data.results) {
+                let uniqueTracks = new Map();
+                let artistCounts = {};
+                let songs = [];
+
+                for (let song of response.data.results) {
+                    if (!song.previewUrl || !song.trackId) continue;
+                    
+                    let safeTitle = song.trackName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                    let safeArtist = (song.artistName || 'unknown').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                    let dedupeKey = `${safeTitle}_${safeArtist}`;
+                    
+                    if (uniqueTracks.has(dedupeKey) || uniqueTracks.has(song.trackId)) continue;
+                    
+                    let aName = song.artistName || 'Unknown Artist';
+                    // DIVERSITY RULE: Maximum 2 songs per artist per category
+                    if ((artistCounts[aName] || 0) >= 2) continue; 
+                    
+                    artistCounts[aName] = (artistCounts[aName] || 0) + 1;
+                    uniqueTracks.set(dedupeKey, true);
+                    uniqueTracks.set(song.trackId, true);
+
+                    songs.push({
+                        id: `itunes_${song.trackId}`,
+                        title: song.trackName,
+                        artist: aName,
+                        album: song.collectionName || null,
+                        artwork: song.artworkUrl100 ? song.artworkUrl100.replace('100x100', '300x300') : 'assets/images/default.png',
+                        audioUrl: song.previewUrl,
+                        duration: song.trackTimeMillis ? song.trackTimeMillis / 1000 : null,
+                        source: "itunes",
+                        isPreview: true
+                    });
+                }
+                if (songs.length > 0) {
+                    finalCategories.push({ id: cat.id, title: cat.title, songs: songs });
+                }
+            }
+        }
+
+        if (finalCategories.length > 0) {
+            homeCache = { data: finalCategories, timestamp: now };
+            return res.json({ success: true, categories: finalCategories });
+        } else {
+            if (homeCache.data) return res.json({ success: true, categories: homeCache.data });
+            return res.json({ success: false, categories: [], error: "Home catalog unavailable" });
+        }
+    } catch (error) {
+        console.error("Home API Error:", error.message);
+        if (homeCache.data) return res.json({ success: true, categories: homeCache.data });
+        return res.json({ success: false, categories: [], error: "Home catalog unavailable" });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Sangeet-X Backend is alive and listening on http://localhost:${PORT}`);
 });

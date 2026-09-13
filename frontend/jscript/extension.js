@@ -19,30 +19,6 @@
     function addFavoriteButtons(){
         $all('.song').forEach((songDiv) => {
             if (songDiv.querySelector('.fav-btn')) return;
-            const btn = document.createElement('button');
-            btn.className = 'fav-btn';
-            btn.title = 'Like / Favorite';
-            btn.innerText = favorites.includes(songDiv.getAttribute('data-id')) ? '★' : '☆';
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                toggleExtFavorite(songDiv, btn);
-            });
-            btn.style.position = 'absolute';
-            btn.style.right = '8px';
-            btn.style.top = '8px';
-            btn.style.padding = '4px 6px';
-            btn.style.border = 'none';
-            btn.style.borderRadius = '6px';
-            btn.style.cursor = 'pointer';
-            songDiv.style.position = songDiv.style.position || 'relative';
-            songDiv.appendChild(btn);
-        });
-    }
-
-    /* Replace the Favorites logic inside extension.js */
-    function addFavoriteButtons(){
-        $all('.song').forEach((songDiv) => {
-            if (songDiv.querySelector('.fav-btn')) return;
             const songId = songDiv.getAttribute('data-id');
             const btn = document.createElement('button');
             btn.className = 'fav-btn';
@@ -68,8 +44,6 @@
             songDiv.appendChild(btn);
         });
     }
-
-    // You can completely DELETE the old toggleExtFavorite() function.
     /* ----------------- Control bar UI ----------------- */
     function createControlBar(){
         const controlsContainer = document.createElement('div');
