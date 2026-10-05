@@ -432,7 +432,7 @@ async function triggerDynamicPersonalization() {
 
     // Dynamically rebuild the UI if the user is currently on the Home page
     const menuDiv = document.querySelector('.songs-menu');
-    if (menuDiv && menuDiv.classList.contains("home-layout") && !menuDiv.innerHTML.includes("SANGEET Library")) {
+    if (menuDiv && menuDiv.classList.contains("home-layout") && !menuDiv.classList.contains("d1") && !menuDiv.innerHTML.includes("SANGEET Library")) {
         addHomePage();
     }
 }
@@ -707,7 +707,8 @@ async function searchSong() {
     songList.innerHTML = '<h2 style="color: white; margin-left: 20px;">Searching...</h2>';
 
     try {
-        const response = await fetch(`http://localhost:3000/api/search?q=${value}`);
+        const response = await fetch(`http://localhost:3000/api/search?q=${encodeURIComponent(value)}`);
+        if (!response.ok) throw new Error("Network response was not ok");
         const data = await response.json();
         songList.innerHTML = ''; 
 
@@ -884,7 +885,7 @@ function showAnalytics() {
 
 function showFavorites() {
     const mainContainer = typeof songsMenuDiv !== 'undefined' ? songsMenuDiv : document.querySelector('.songList');
-    mainContainer.classList.remove("d2", "d3");
+    mainContainer.classList.remove("d2", "d3","home-layout");
     mainContainer.classList.add("d1");
 
     let favoriteSongs = appState.library.favorites;
@@ -906,7 +907,15 @@ function showFavorites() {
                 <div style="display: flex; flex-direction: column; gap: 10px;">
                     <span style="font-size: 0.95rem; font-weight: 700; text-transform: uppercase; color: #ffb199;">Your Collection</span>
                     <h1 style="font-size: 5.5rem; margin: 0; font-weight: 900;">Liked Songs</h1>
-                    <p style="margin: 0; font-size: 1.1rem; color: #e2e8f0;">User <span style="color: #ff3366;">•</span> ${songCount} songs</p>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <p style="margin: 0; font-size: 1.1rem; color: #e2e8f0;"> <span style="color: #ff3366;">•</span> ${songCount} songs</p>
+
+                    ${songCount > 0 ? `
+                        <button onclick="playAllFavorites()" style="background: #eef3f0; color: black; border: none; padding: 10px 20px; border-radius: 25px; font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-play"></i> Play Playlist
+                        </button>
+                        ` : ''}
+                    </div>
                 </div>
             </div>
             <div style="padding: 0 40px;">
@@ -1004,7 +1013,14 @@ function playFavoriteSong(index) {
     Player.loadSong(song);
     Player.play();
 }
-
+function playAllFavorites() {
+    let favorites = appState.library.favorites;
+    if (!favorites || favorites.length === 0) return;
+    // Set the global playlist context to your liked songs so Next/Prev works
+    currentPlaylistContext = favorites.map(s => s.id);
+    Player.loadSong(favorites[0]);
+    Player.play();
+}
 /* =========================================================
    CHAPTER 6: UTILITY FUNCTIONS
 ========================================================= */
@@ -1116,3 +1132,22 @@ document.addEventListener("DOMContentLoaded", () => {
         subtree: true
     });
 });
+function exitApp() {
+    // 1. Stop any currently playing audio
+    if (typeof Player !== 'undefined' && Player.audio) {
+        Player.pause();
+    }
+    
+    // 2. Attempt to close the browser tab
+    window.close();
+    
+    // 3. Fallback: If the browser blocks window.close(), show a clean exit screen
+    setTimeout(() => {
+        document.body.innerHTML = `
+            <div style="height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: black; color: white; font-family: Verdana;">
+                <h1 style="font-size: 4rem; color: wheat; letter-spacing: 15px; margin-bottom: 20px;">SANGEET</h1>
+                <p style="color: #aaa; font-size: 1.2rem;">Playback stopped. You can now safely close this tab.</p>
+            </div>
+        `;
+    }, 200);
+}
