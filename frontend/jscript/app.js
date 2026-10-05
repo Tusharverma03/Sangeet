@@ -1,3 +1,4 @@
+const API_BASE = "https://sangeet-khaki.vercel.app";
 /* =========================================================
    CHAPTER 1: CENTRAL STATE, REGISTRY & NORMALIZERS
    ========================================================= */
@@ -419,7 +420,7 @@ async function triggerDynamicPersonalization() {
         if (!fetchedPersonalizedArtists.has(artist)) {
             fetchedPersonalizedArtists.add(artist);
             try {
-                const response = await fetch(`http://localhost:3000/api/search?q=${encodeURIComponent(artist)}`);
+                const response = await fetch(`https://sangeet-khaki.vercel.app/api/search?q=${encodeURIComponent(artist)}`);
                 if (response.ok) {
                     const data = await response.json();
                     data.forEach(apiSong => personalizedCandidatesPool.push(registerSong(normalizeITunesSong(apiSong))));
@@ -507,7 +508,7 @@ async function loadHomeSongs() {
     songsMenuDiv.innerHTML = `<h2 style="color: #aaa; margin-left: 20px; font-family: Verdana;"><i class="fa-solid fa-spinner fa-spin"></i> Loading Discover Catalog...</h2>`;
     
     try {
-        const response = await fetch('http://localhost:3000/api/home');
+        const response = await fetch('https://sangeet-khaki.vercel.app/api/home');
         if (!response.ok) throw new Error("Network response was not ok");
         const data = await response.json();
         
@@ -707,7 +708,7 @@ async function searchSong() {
     songList.innerHTML = '<h2 style="color: white; margin-left: 20px;">Searching...</h2>';
 
     try {
-        const response = await fetch(`http://localhost:3000/api/search?q=${encodeURIComponent(value)}`);
+        const response = await fetch(`https://sangeet-khaki.vercel.app/api/search?q=${encodeURIComponent(value)}`);
         if (!response.ok) throw new Error("Network response was not ok");
         const data = await response.json();
         songList.innerHTML = ''; 
@@ -1050,7 +1051,7 @@ async function switchTab(tabName, element) {
 
         try {
             // PHASE 5: Fetch from our own backend instead of LRCLIB directly
-            const url = `http://localhost:3000/api/lyrics?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`;
+            const url = `https://sangeet-khaki.vercel.app/api/lyrics?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`;
             const response = await fetch(url);
             
             if (!response.ok) throw new Error("Backend connection failed");
